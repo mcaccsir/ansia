@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansia - Sociological Analyzer</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-primary: #FFFFFF;
+            --text-secondary: #666666;
+            --accent: #ffffff;
+            --transition-speed: 0.8s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Cormorant Garamond', serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: background-color 1s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 2rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 2s forwards;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            opacity: 0.7;
+        }
+
+        #reflection-content {
+            font-size: 2.8rem;
+            line-height: 1.4;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .meta-info {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 3rem;
+            letter-spacing: 0.1em;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            transition: background-color 0.5s;
+        }
+
+        .status-indicator.active {
+            background-color: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .date-display {
+            margin-top: 0.5rem;
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            #reflection-content {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+
+        <div id="reflection-content">
+            Attesa del segnale...
+        </div>
+
+        <div class="meta-info">
+            <div id="status-dot" class="status-indicator"></div>
+            <span id="status-text">DISCONNECTED</span>
+            <div id="last-update" class="date-display"></div>
+        </div>
+    </div>
+
+    <script>
+        const TOPIC_NAME = "ansia_raspberry_broadcast_v1";
+        const NTFY_URL = `https://ntfy.sh/${TOPIC_NAME}/sse`;
+
+        const contentEl = document.getElementById('reflection-content');
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const lastUpdateEl = document.getElementById('last-update');
+
+        function updateDisplay(text, timestamp) {
+            contentEl.style.opacity = 0;
+
+            setTimeout(() => {
+                contentEl.innerHTML = text; // ntfy JSON is trusted for this app
+                lastUpdateEl.innerText = timestamp || new Date().toLocaleTimeString();
+                contentEl.style.opacity = 1;
+            }, 800);
+        }
+
+        function connectToNtfy() {
+            console.log("Connecting to ntfy.sh...");
+            const eventSource = new EventSource(NTFY_URL);
+
+            eventSource.onopen = () => {
+                console.log("Connected to ntfy.sh");
+                statusText.innerText = "LIVE FEED";
+                statusDot.classList.add('active');
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    // ntfy wraps the payload in 'message' or raw json
+                    // If we sent JSON via python requests, it comes in 'message' string if we didn't specify headers carefully,
+                    // OR if we sent valid JSON body, ntfy might pass it through.
+                    // Actually ntfy sends the body as "message" string for default POSTs, or we can parse if it's JSON.
+
+                    let payload = {};
+                    try {
+                        // Attempt to parse the 'message' field which contains our JSON payload
+                        payload = JSON.parse(data.message);
+                    } catch (e) {
+                        // If not JSON, maybe plain text? (Fallback)
+                        console.log("Received non-JSON message:", data.message);
+                        return;
+                    }
+
+                    if (payload.text) {
+                        updateDisplay(payload.text, payload.timestamp);
+                    }
+                } catch (e) {
+                    console.error("Error parsing SSe event:", e);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                console.error("EventSource failed:", err);
+                statusDot.classList.remove('active');
+                statusText.innerText = "RECONNECTING...";
+                // EventSource auto-reconnects, but UI feedback is nice
+            };
+        }
+
+        connectToNtfy();
+
+    </script>
+</body>
+
+</html>
