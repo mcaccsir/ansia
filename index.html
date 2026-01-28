@@ -40,7 +40,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 600px;
             padding: 2rem;
             text-align: center;
             opacity: 0;
@@ -62,11 +62,26 @@
             font-size: 2.8rem;
             line-height: 1.4;
             font-weight: 300;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        #headline-content {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #FFD700;
+            /* Giallo oro */
+            opacity: 0;
+            margin-top: 2rem;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            font-style: italic;
+            letter-spacing: 0.05em;
             transition: opacity var(--transition-speed) ease;
         }
 
@@ -123,6 +138,8 @@
             Attesa del segnale...
         </div>
 
+        <div id="headline-content"></div>
+
         <div class="meta-info">
             <div id="status-dot" class="status-indicator"></div>
             <span id="status-text">DISCONNECTED</span>
@@ -135,17 +152,22 @@
         const NTFY_URL = `https://ntfy.sh/${TOPIC_NAME}/sse`;
 
         const contentEl = document.getElementById('reflection-content');
+        const headlineEl = document.getElementById('headline-content');
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const lastUpdateEl = document.getElementById('last-update');
 
-        function updateDisplay(text, timestamp) {
+        function updateDisplay(text, headline, timestamp) {
             contentEl.style.opacity = 0;
+            headlineEl.style.opacity = 0;
 
             setTimeout(() => {
-                contentEl.innerHTML = text; // ntfy JSON is trusted for this app
+                contentEl.innerHTML = text;
+                headlineEl.innerHTML = headline ? `— ${headline}` : "";
                 lastUpdateEl.innerText = timestamp || new Date().toLocaleTimeString();
+
                 contentEl.style.opacity = 1;
+                if (headline) headlineEl.style.opacity = 0.8;
             }, 800);
         }
 
@@ -178,7 +200,7 @@
                     }
 
                     if (payload.text) {
-                        updateDisplay(payload.text, payload.timestamp);
+                        updateDisplay(payload.text, payload.headline, payload.timestamp);
                     }
                 } catch (e) {
                     console.error("Error parsing SSe event:", e);
