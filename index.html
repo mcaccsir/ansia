@@ -35,13 +35,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            padding: 1rem;
             overflow: hidden;
             transition: background-color 1s ease;
         }
 
         .container {
             max-width: 800px;
-            padding: 2rem;
+            width: 90%;
+            margin: 0 auto;
+            padding: 3rem 2.5rem;
             text-align: center;
             opacity: 0;
             transform: translateY(20px);
@@ -63,6 +66,7 @@
             line-height: 1.4;
             font-weight: 300;
             margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
             min-height: 200px;
             display: flex;
             align-items: center;
@@ -77,7 +81,8 @@
             /* Giallo oro */
             opacity: 0;
             margin-top: 2rem;
-            max-width: 80%;
+            padding: 0 1rem;
+            max-width: 85%;
             margin-left: auto;
             margin-right: auto;
             font-style: italic;
@@ -122,8 +127,18 @@
         }
 
         @media (max-width: 768px) {
+            .container {
+                width: 92%;
+                padding: 2rem 1.5rem;
+            }
+
             #reflection-content {
                 font-size: 1.5rem;
+                padding: 0.8rem 1rem;
+            }
+
+            h1 {
+                font-size: 0.75rem;
             }
         }
     </style>
